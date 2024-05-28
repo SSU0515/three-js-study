@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <canvas id="canvas" width="500" height="500"></canvas>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.141.0/build/three.module.js",
+          "GLTFLoader": "https://unpkg.com/three@0.141.0/examples/jsm/loaders/GLTFLoader.js",
+          "OrbitControls": "https://unpkg.com/three@0.141.0/examples/jsm/controls/OrbitControls.js"
+        }
+      }
+    </script>
+    <script type="module">
+      import { GLTFLoader } from "GLTFLoader";
+      import * as THREE from "three";
+      import { OrbitControls } from "OrbitControls";
+
+      let scene = new THREE.Scene();
+      let renderer = new THREE.WebGLRenderer({
+        canvas: document.querySelector("#canvas"),
+        antialias: true,
+      });
+      renderer.outputEncoding = THREE.sRGBEncoding;
+
+      // 캔버스 크기에 맞춰 aspect ratio 설정
+      let canvas = document.querySelector("#canvas");
+      let camera = new THREE.PerspectiveCamera(
+        30,
+        canvas.width / canvas.height
+      );
+      camera.position.set(0, 0, 8);
+
+      // 빛
+      const light = new THREE.DirectionalLight(0xffffff, 10);
+      scene.add(light);
+
+      // 배경
+      scene.background = new THREE.Color("white");
+
+      // 3D 파일 불러오기 및 렌더링
+      let loader = new GLTFLoader();
+      loader.load("/shiba/scene.gltf", function (gltf) {
+        scene.add(gltf.scene);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+
+        // 애니메이션
+        function animate() {
+          requestAnimationFrame(animate);
+          controls.update();
+          renderer.render(scene, camera);
+        }
+        animate();
+      });
+    </script>
+  </body>
+</html>

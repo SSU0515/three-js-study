@@ -8,9 +8,31 @@
     <meta property="og:site_name" content="3D 강아지" />
     <meta property="og:description" content="귀여운 강아지를 움직여보세요!🐶" />
     <title>3D 강아지</title>
+    <link rel="stylesheet" href="./style.css" />
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+      }
+      canvas {
+        display: block;
+      }
+      #overlay {
+        position: absolute;
+        bottom: 5%;
+        left: 50%;
+        transform: translate(-50%);
+        color: #ef6da7;
+        font-size: 16px;
+        z-index: 999;
+      }
+    </style>
   </head>
   <body>
-    <canvas id="canvas" width="500" height="500"></canvas>
+    <div id="overlay">
+      <h3>마우스를 이용해 확대, 축소, 회전을 시켜보세요!</h3>
+    </div>
+    <canvas id="canvas"></canvas>
     <script type="importmap">
       {
         "imports": {
@@ -30,13 +52,15 @@
         canvas: document.querySelector("#canvas"),
         antialias: true,
       });
+      renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.outputEncoding = THREE.sRGBEncoding;
 
       // 캔버스 크기에 맞춰 aspect ratio 설정
-      let canvas = document.querySelector("#canvas");
       let camera = new THREE.PerspectiveCamera(
-        35,
-        canvas.width / canvas.height
+        50,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
       );
       camera.position.set(0, 0, 10);
 
@@ -44,29 +68,48 @@
       const light = new THREE.DirectionalLight(0xffffff, 10);
       scene.add(light);
 
-      // 배경 이미지 로드
+      // 배경 평면 설정
       const textureLoader = new THREE.TextureLoader();
       textureLoader.load("./img/room.png", function (texture) {
-        scene.background = texture;
+        const backgroundMesh = new THREE.Mesh(
+          new THREE.PlaneGeometry(1, 2, 2, 1),
+          new THREE.MeshBasicMaterial({
+            map: texture,
+          })
+        );
+
+        backgroundMesh.material.depthTest = false;
+        backgroundMesh.material.depthWrite = false;
+
+        const backgroundScene = new THREE.Scene();
+        const backgroundCamera = new THREE.Camera();
+        backgroundScene.add(backgroundMesh);
+
+        // 3D 파일 불러오기 및 렌더링
+        const gltfLoader = new GLTFLoader();
+        gltfLoader.load("/shiba/scene.gltf", function (gltf) {
+          scene.add(gltf.scene);
+
+          const controls = new OrbitControls(camera, renderer.domElement);
+
+          // 애니메이션
+          function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+
+            renderer.autoClear = false;
+            renderer.clear();
+            renderer.render(backgroundScene, backgroundCamera);
+            renderer.render(scene, camera);
+          }
+          animate();
+        });
       });
 
-      // 애니메이션
-      function animate() {
-        requestAnimationFrame(animate);
-        controls.update();
-        renderer.render(scene, camera);
-      }
-
-      // OrbitControls 설정
-      const controls = new OrbitControls(camera, renderer.domElement);
-
-      // 3D 파일 불러오기 및 렌더링
-      const gltfLoader = new GLTFLoader();
-      gltfLoader.load("/shiba/scene.gltf", function (gltf) {
-        scene.add(gltf.scene);
-
-        // 애니메이션 시작
-        animate();
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
       });
     </script>
   </body>

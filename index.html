@@ -31,31 +31,37 @@
       // 캔버스 크기에 맞춰 aspect ratio 설정
       let canvas = document.querySelector("#canvas");
       let camera = new THREE.PerspectiveCamera(
-        30,
+        35,
         canvas.width / canvas.height
       );
-      camera.position.set(0, 0, 8);
+      camera.position.set(0, 0, 10);
 
       // 빛
       const light = new THREE.DirectionalLight(0xffffff, 10);
       scene.add(light);
 
-      // 배경
-      scene.background = new THREE.Color("white");
+      // 배경 이미지 로드
+      const textureLoader = new THREE.TextureLoader();
+      textureLoader.load("./img/room.png", function (texture) {
+        scene.background = texture;
+      });
+
+      // 애니메이션
+      function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+      }
+
+      // OrbitControls 설정
+      const controls = new OrbitControls(camera, renderer.domElement);
 
       // 3D 파일 불러오기 및 렌더링
-      let loader = new GLTFLoader();
-      loader.load("/shiba/scene.gltf", function (gltf) {
+      const gltfLoader = new GLTFLoader();
+      gltfLoader.load("/shiba/scene.gltf", function (gltf) {
         scene.add(gltf.scene);
 
-        const controls = new OrbitControls(camera, renderer.domElement);
-
-        // 애니메이션
-        function animate() {
-          requestAnimationFrame(animate);
-          controls.update();
-          renderer.render(scene, camera);
-        }
+        // 애니메이션 시작
         animate();
       });
     </script>
